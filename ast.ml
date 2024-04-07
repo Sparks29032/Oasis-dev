@@ -53,6 +53,15 @@ type func_def = {
   body: stmt list;
 }
 
+(*ForwardFunction Information*)
+type fwdfunc_def = {
+  pnode = string;
+  cnode = string;
+  formals = bind list; 
+  locals = bind list;
+  body =  stmt list;
+}
+
 (*Program*)
 type program = nbind list * lbind list * vbind list * bind list * func_def list
 

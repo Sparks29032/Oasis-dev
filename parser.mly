@@ -29,9 +29,9 @@ open Ast
 %%
 
 /*Program - TRML definitions portion and program main*/
-/*TODO: separate definitions and decls into two files*/
+/*TODO: separate definitions and tscript into two files*/
 program:
-  trml decls EOF { let (tn, tl, tv)=$1 in let (dv, df)=$2 in (tn, tl, tv, dv, df) }
+  trml tscript EOF { let (tn, tl, tv)=$1 in let (dv, df)=$2 in (tn, tl, tv, dv, df) }
 
 /*TRML - define node types, define nodes, initialize nodes*/
 trml:
@@ -59,11 +59,26 @@ valsdecl:
  | ID ASSIGN typ expr                    { ($1, ValOpt($3, $4), None) }
  | ID ASSIGN BTICK typ expr             { ($1, None, ValOpt($4, $5)) }
 
-/*Declarations*/
-decls:
-   { ([], []) }
- | vdecl SEMI decls    { (($1 :: fst $3), snd $3) }
- | fdecl decls        { (fst $2, ($1 :: snd $2)) }
+/*Tree Script File*, should give 4 things: 
+variable, function, forward, backward declaration /
+tscript:
+   { ([], [], [], []) }
+ | vdecl SEMI tscript    { 
+   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
+   (($1::cur_vdecl), cur_fdecl, cur_fwddecl, cur_bckdecl)
+  }
+ | fdecl tscript    { 
+   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
+   (cur_vdecl, ($1::cur_fdecl), cur_fwddecl, cur_bckdecl)
+  }
+ | fwddecl tscript   { 
+   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
+   (cur_vdecl, cur_fdecl, ($1::cur_fwddecl), cur_bckdecl)
+  }
+ | bckdecl tscript      { 
+   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
+   (cur_vdecl, cur_fdecl, cur_fwddecl, ($1::cur_bckdecl))
+  }
 
 vdecl_list:
     { [] }
@@ -87,6 +102,18 @@ fdecl:
       body=$7
     }
   }
+
+fwddecl:
+  FORWARD ID RARROW ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE 
+ {
+    {
+      pnode = $2;
+      cnode = $4;
+      formals = $6; 
+      locals = $9;
+      body = $10;
+    }
+ }
 
 formals_opt:
     { [] }
@@ -140,3 +167,5 @@ args_opt:
 args:
     expr  { [$1] }
   | expr COMMA args { $1::$3 }
+
+
