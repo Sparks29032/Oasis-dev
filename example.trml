@@ -1,0 +1,32 @@
+.trml {
+Root RT;
+
+/*Intermediary Nodes*/
+Node IT;
+
+/*Leaf Nodes with 0 and 1 as values*/
+Node LF;
+
+/*Fibbonaci Tree Setup
+     3
+   /   \
+  1     2
+ / \   / \
+0   1 1   1
+*/
+RT rt;
+IT it1 -> rt;
+IT it2 -> rt;
+LF l1 -> it1;
+LF l2 -> it1;
+LF l3 -> it2;
+LF l4 -> it2;
+
+/*Forward Values Unused*/
+l1 = ` 0;
+l2 = ` 1;
+l3 = ` 1;
+l4 = ` 1;
+}
+
+/*No TRS*/
