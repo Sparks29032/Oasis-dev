@@ -21,13 +21,12 @@ type expr =
   | Call of string * expr list
 
 (*Statements*)
-(*TODO: add for loop*)
-(*TODO: add list comprehension*)
 type stmt =
     Block of stmt list
   | Expr of expr
   | If of expr * stmt * stmt
   | While of expr * stmt
+  | For of string * expr list * stmt
   | Return of expr
 
 (*Bindings*)
@@ -73,7 +72,7 @@ let string_of_binop = function
   | And -> "and"
   | Or -> "or"
 let string_of_unop = function
-	Not -> "not"
+    Not -> "not"
 
 (*Expressions*)
 let rec string_of_expr = function
@@ -98,6 +97,7 @@ let rec string_of_stmt = function
   | If(e, s1, s2) ->  "if (" ^ string_of_expr e ^ ")\n" ^
                       string_of_stmt s1 ^ "else\n" ^ string_of_stmt s2
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
+  | For(v, el, s) -> "for (" ^ v ^ " in [" ^ String.concat "" (List.map string_of_expr el) ^ "]) " ^ string_of_stmt s
 
 (*TRML Declarations*)
 let string_of_typ = function
