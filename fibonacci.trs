@@ -8,7 +8,7 @@ Node IT;
 /*Leaf Nodes with 0 and 1 as values*/
 Node LF;
 
-/*Fibbonaci Tree Setup
+/*Fibonacci Tree Setup
      3
    /   \
   1     2

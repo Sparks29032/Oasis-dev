@@ -3,7 +3,7 @@
 (*Operations*)
 (*TODO: add negation*)
 type unop = Not
-type binop = Add | Sub | Tim | Div | Equal | Neq | Less | Leq | Great | Geq | And | Or
+type binop = Add | Sub | Tim | Div | Mod | Equal | Neq | Less | Leq | Great | Geq | And | Or
 
 (*Types*)
 (*TODO: add strings and floats*)
@@ -21,13 +21,15 @@ type expr =
   | Call of string * expr list
 
 (*Statements*)
+(*TODO: list comprehension*)
 type stmt =
     Block of stmt list
   | Expr of expr
-  | If of expr * stmt * stmt
+  | If of expr * stmt * stmt_opt
   | While of expr * stmt
-  | For of string * expr list * stmt
+  | For of string * (expr * expr) list * stmt
   | Return of expr
+and stmt_opt = None | StmtOpt of stmt
 
 (*Bindings*)
 type bind = typ * string
@@ -63,6 +65,7 @@ let string_of_binop = function
   | Sub -> "-"
   | Tim -> "*"
   | Div -> "/"
+  | Mod -> "%"
   | Equal -> "=="
   | Neq -> "!="
   | Less -> "<"
@@ -89,15 +92,19 @@ let rec string_of_expr = function
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
 
 (*Statements*)
+let string_of_forexpr = function
+    (e1, e2) -> if e1 = e2 then string_of_expr e1 else string_of_expr e1 ^ " : " ^ string_of_expr e2
 let rec string_of_stmt = function
-    Block(stmts) ->
+	Block(stmts) ->
     "{\n" ^ String.concat "" (List.map string_of_stmt stmts) ^ "}\n"
   | Expr(expr) -> string_of_expr expr ^ ";\n"
   | Return(expr) -> "return " ^ string_of_expr expr ^ ";\n"
-  | If(e, s1, s2) ->  "if (" ^ string_of_expr e ^ ")\n" ^
-                      string_of_stmt s1 ^ "else\n" ^ string_of_stmt s2
+  | If(e, s1, s2) ->  "if (" ^ string_of_expr e ^ ")\n" ^ string_of_stmt s1 ^ "else\n" ^ string_of_stmtopt s2
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
-  | For(v, el, s) -> "for (" ^ v ^ " in [" ^ String.concat "" (List.map string_of_expr el) ^ "]) " ^ string_of_stmt s
+  | For(v, el, s) -> "for (" ^ v ^ " in [" ^ String.concat ", " (List.map string_of_forexpr el) ^ "]) " ^ string_of_stmt s
+and string_of_stmtopt = function
+    StmtOpt(s) -> string_of_stmt s
+  | None -> ";\n"
 
 (*TRML Declarations*)
 let string_of_typ = function

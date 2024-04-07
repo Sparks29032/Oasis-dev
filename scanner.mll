@@ -21,6 +21,7 @@ rule token = parse
   | '-'                     { MINUS }
   | '*'                     { TIMES }
   | '/'                     { DIVIDE }
+  | '%'                     { MOD }
   | '='                     { ASSIGN }
   | "=="                    { EQ }
   | "!="                    { NEQ }
@@ -32,6 +33,7 @@ rule token = parse
   | "or"                    { OR }
   | "not"                   { NOT }
   | "if"                    { IF }
+  | "ifne"                  { IFNOELSE }
   | "else"                  { ELSE }
   | "while"                 { WHILE }
   | "for"                   { FOR }
@@ -45,11 +47,11 @@ rule token = parse
   | "Node"                  { NODE }
   | "->"                    { RARROW }
   | "`"                     { BTICK }
-  | "true"                  { BLIT(true)  }
-  | "false"                 { BLIT(false) }
+  | "True"                  { BLIT(true)  }
+  | "False"                 { BLIT(false) }
   | digit+ as lem           { LITERAL(int_of_string lem) }
   | letter (digit | letter | '_')* as lem    { ID(lem) }
-  | eof                        { EOF }
+  | eof                     { EOF }
   | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 
 and comment = parse
