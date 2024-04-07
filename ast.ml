@@ -19,7 +19,6 @@ type expr =
   | Binop of expr * binop * expr
   | Assign of string * expr
   | Call of string * expr list
-type expr_opt = None | Eopt of expr
 
 (*Statements*)
 (*TODO: add for loop*)
@@ -33,9 +32,11 @@ type stmt =
 
 (*Bindings*)
 type bind = typ * string
+type val_opt = None | ValOpt of typ * expr
+type str_opt = None | StringOpt of string
 type nbind = ntyp * string
-type lbind = string * string * expr_opt
-type vbind = string * expr * expr_opt
+type lbind = string * string * str_opt
+type vbind = string * val_opt * val_opt
 
 (*TRML File Information*)
 type trml_obj = {
@@ -98,7 +99,7 @@ let rec string_of_stmt = function
                       string_of_stmt s1 ^ "else\n" ^ string_of_stmt s2
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
 
-(*Types*)
+(*TRML Declarations*)
 let string_of_typ = function
     Int -> "int"
   | Bool -> "bool"
@@ -106,16 +107,16 @@ let string_of_ntyp = function
     Root -> "ROOT"
   | Node -> "NODE"
 let string_of_linkopt = function
-	None -> ""
-  | Eopt(e) -> " -> " ^ string_of_expr e
+    StringOpt(e) -> " -> " ^ e
+  | None -> ""
 let string_of_valsopt = function
-	None -> ""
-  | Eopt(e) -> ", bval: " ^ string_of_expr e
+    ValOpt(t, e) -> string_of_typ t ^ " " ^ string_of_expr e
+  | None -> "None"
 
 (*Declarations*)
 let string_of_nodedecl (nt, id) = string_of_ntyp nt ^ " " ^ id ^ ";\n"
 let string_of_linkdecl (idtyp, iddec, lkopt) = idtyp ^ " " ^ iddec ^ string_of_linkopt lkopt ^ ";\n"
-let string_of_valsdecl (id, fval, bval) = id ^ " = < fval: " ^ string_of_expr fval ^ string_of_valsopt bval ^ " >;\n"
+let string_of_valsdecl (id, fvalopt, bvalopt) = id ^ " = < fval: " ^ string_of_valsopt fvalopt ^ ", bval: " ^ string_of_valsopt bvalopt ^ " >;\n"
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 let string_of_fdecl fdecl =
