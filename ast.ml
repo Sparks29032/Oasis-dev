@@ -121,7 +121,7 @@ let rec string_of_stmt = function
   | Return(expr) -> "return " ^ string_of_expr expr ^ ";\n"
   | Give(expr) -> "give " ^ string_of_expr expr ^ ";\n"
   | Eval(expr) -> "eval " ^ string_of_expr expr ^ ";\n"
-  | Create(expr, count) -> "create " ^ string_of_expr expr ^ " [" ^ "node created <" ^ string_of_expr count ^ "> times];\n"
+  | Create(expr, count) -> "create " ^ string_of_expr expr ^ " [<" ^ string_of_expr count ^ "> nodes to be created];\n"
   | If(e, s1, s2) ->  "if (" ^ string_of_expr e ^ ")\n" ^ string_of_stmt s1 ^ "else\n" ^ string_of_stmtopt s2
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
   | For(v, el, s) -> "for (" ^ v ^ " in [" ^ String.concat ", " (List.map string_of_forexpr el) ^ "]) " ^ string_of_stmt s
