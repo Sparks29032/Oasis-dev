@@ -1,0 +1,21 @@
+.trml {
+
+}
+
+/*returns the number of primes under a certain value*/
+
+int primes_under_n (int n) {
+    int nprimes;
+    int factor;
+    bool flag;
+    nprimes = 0;
+    for (i in [1:n/2 - 1, n/2:n/2, n/2 + 1:n]) { 
+        factor = 2;
+        flag = True;
+        while (flag and factor * factor < i) {
+            ifne (i % factor == 0) flag = False;
+        }
+        ifne (flag) nprimes = nprimes + 1;
+    }
+    return nprimes;
+}

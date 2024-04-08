@@ -4,9 +4,9 @@
 open Ast
 %}
 
-%token SEMI LPAREN RPAREN LBRACK, RBRACK, LBRACE RBRACE PLUS MINUS TIMES DIVIDE ASSIGN
+%token SEMI LPAREN RPAREN LBRACK, RBRACK, LBRACE RBRACE PLUS MINUS TIMES DIVIDE MOD ASSIGN
 %token EQ NEQ LT LEQ GT GEQ AND OR NOT NEG
-%token IF ELSE WHILE FOR IN COLON INT BOOL
+%token IFNOELSE IF ELSE WHILE FOR IN COLON INT BOOL
 %token TRML ROOT NODE RARROW BTICK NONE
 %token RETURN COMMA
 %token <int> LITERAL
@@ -17,13 +17,14 @@ open Ast
 %start program
 %type <Ast.program> program
 
+%right ELSE
 %right ASSIGN
 %left OR
 %left AND
 %left EQ NEQ
 %left LT LEQ GT GEQ
 %left PLUS MINUS
-%left TIMES DIVIDE
+%left TIMES DIVIDE MOD
 %right NOT
 
 %%
@@ -31,7 +32,7 @@ open Ast
 /*Program - TRML definitions portion and program main*/
 /*TODO: separate definitions and tscript into two files*/
 program:
-  trml tscript EOF { let (tn, tl, tv)=$1 in let (dv, df)=$2 in (tn, tl, tv, dv, df) }
+  trml trs EOF { let (tn, tl, tv)=$1 in let (dv, df)=$2 in (tn, tl, tv, dv, df) }
 
 /*TRML - define node types, define nodes, initialize nodes*/
 trml:
@@ -50,35 +51,36 @@ ntyp:
 /*Node Information*/
 /*node type declaration, node declaration, node initialization*/
 nodedecl:
-   ntyp ID                                 { ($1, $2) }
+   ntyp ID                              { ($1, $2) }
 linkdecl:
-   ID ID RARROW ID                        { ($1, $2, StringOpt($4)) }
+   ID ID RARROW ID                      { ($1, $2, StringOpt($4)) }
  | ID ID                                { ($1, $2, None) }
 valsdecl:
    ID ASSIGN typ expr BTICK typ expr    { ($1, ValOpt($3, $4), ValOpt($6, $7)) }
- | ID ASSIGN typ expr                    { ($1, ValOpt($3, $4), None) }
+ | ID ASSIGN typ expr                   { ($1, ValOpt($3, $4), None) }
  | ID ASSIGN BTICK typ expr             { ($1, None, ValOpt($4, $5)) }
 
 /*Tree Script File*, should give 4 things: 
 variable, function, forward, backward declaration /
-tscript:
+trs:
    { ([], [], [], []) }
- | vdecl SEMI tscript    { 
+ | vdecl SEMI trs    { 
    let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
    (($1::cur_vdecl), cur_fdecl, cur_fwddecl, cur_bckdecl)
   }
- | fdecl tscript    { 
+ | fdecl trs    { 
    let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
    (cur_vdecl, ($1::cur_fdecl), cur_fwddecl, cur_bckdecl)
   }
- | fwddecl tscript   { 
+ | fwddecl trs   { 
    let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
    (cur_vdecl, cur_fdecl, ($1::cur_fwddecl), cur_bckdecl)
   }
- | bckdecl tscript      { 
+ | bckdecl trs      { 
    let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
    (cur_vdecl, cur_fdecl, cur_fwddecl, ($1::cur_bckdecl))
   }
+
 
 vdecl_list:
     { [] }
@@ -88,7 +90,7 @@ vdecl:
   typ ID    { ($1, $2) }
 
 typ:
-    INT        { Int }
+    INT     { Int }
   | BOOL    { Bool }
 
 fdecl:
@@ -128,12 +130,13 @@ stmt_list:
   | stmt stmt_list  { $1::$2 }
 
 stmt:
-    expr SEMI                                   { Expr $1 }
-  | LBRACE stmt_list RBRACE                     { Block $2 }
-  | IF LPAREN expr RPAREN stmt ELSE stmt        { If ($3, $5, $7) }
-  | WHILE LPAREN expr RPAREN stmt               { While ($3, $5) }
-  | FOR LPAREN ID IN LBRACK expr_list RBRACK RPAREN stmt    { For ($3, $6, $9) }
-  | RETURN expr SEMI                            { Return $2 }
+    expr SEMI                       { Expr($1) }
+  | LBRACE stmt_list RBRACE         { Block($2) }
+  | IF LPAREN expr RPAREN stmt ELSE stmt        { If ($3, $5, StmtOpt($7)) }
+  | IFNOELSE LPAREN expr RPAREN stmt            { If ($3, $5, None) }
+  | WHILE LPAREN expr RPAREN stmt   { While ($3, $5) }
+  | FOR LPAREN ID IN LBRACK forexpr_list RBRACK RPAREN stmt    { For ($3, $6, $9) }
+  | RETURN expr SEMI                { Return $2 }
 
 expr:
     LITERAL             { Literal($1) }
@@ -143,6 +146,7 @@ expr:
   | expr MINUS expr     { Binop($1, Sub, $3) }
   | expr TIMES expr     { Binop($1, Tim, $3) }
   | expr DIVIDE expr    { Binop($1, Div, $3) }
+  | expr MOD expr    	{ Binop($1, Mod, $3) }
   | expr EQ expr        { Binop($1, Equal, $3) }
   | expr NEQ expr       { Binop($1, Neq, $3) }
   | expr LT expr        { Binop($1, Less, $3) }
@@ -156,9 +160,14 @@ expr:
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN    { Call ($1, $3) }
 
-expr_list:
+/*For loop list comprehension*/
+forexpr_list:
     { [] }
-  | expr COMMA expr_list  { $1::$3 }
+  | forexpr { [$1] }
+  | forexpr COMMA forexpr_list { $1::$3 }
+forexpr:
+	expr            { ($1, $1) }
+  | expr COLON expr { ($1, $3) }
 
 args_opt:
     { [] }
