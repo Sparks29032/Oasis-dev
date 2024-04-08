@@ -55,15 +55,21 @@ type func_def = {
   body: stmt list;
 }
 
-(*ForwardFunction Information*)
 type fwdfunc_def = {
-  pnode : string;
-  cnode : string;
-  formals : bind list; 
-  locals : bind list;
-  body : stmt list;
+    pnode : string;
+    cnode : string;
+    formals : bind list;
+    locals : bind list;
+    body : stmt list;
 }
 
+type bckfunc_def = {
+    pnode : string;
+    cnode : string;
+    formals : bind list;
+    locals : bind list;
+    body : stmt list;
+}
 (*Program*)
 type program = nbind list * lbind list * vbind list * bind list * func_def list
 
@@ -95,7 +101,7 @@ let rec string_of_expr = function
   | Binop(e1, o, e2) ->
     string_of_expr e1 ^ " " ^ string_of_binop o ^ " " ^ string_of_expr e2
   | Unop(o, e) ->
-	string_of_unop o ^ " " ^ string_of_expr e
+    string_of_unop o ^ " " ^ string_of_expr e
   | Assign(v, e) -> v ^ " = " ^ string_of_expr e
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
@@ -104,7 +110,7 @@ let rec string_of_expr = function
 let string_of_forexpr = function
     (e1, e2) -> if e1 = e2 then string_of_expr e1 else string_of_expr e1 ^ " : " ^ string_of_expr e2
 let rec string_of_stmt = function
-	Block(stmts) ->
+    Block(stmts) ->
     "{\n" ^ String.concat "" (List.map string_of_stmt stmts) ^ "}\n"
   | Expr(expr) -> string_of_expr expr ^ ";\n"
   | Return(expr) -> "return " ^ string_of_expr expr ^ ";\n"

@@ -9,11 +9,8 @@ let letter = ['a'-'z' 'A'-'Z']
 rule token = parse
     [' ' '\t' '\r' '\n']    { token lexbuf }
   | "/*"                    { comment lexbuf }
-  | ".trml"                 { TRML }
-  | "Root"                  { ROOT }
-  | "Node"                  { NODE }
-  | "->"                    { RARROW }
-  | "`"                     { BTICK }
+  
+  (*Syntactic Groupers*)
   | '('                     { LPAREN }
   | ')'                     { RPAREN }
   | '['                     { LBRACK }
@@ -22,6 +19,8 @@ rule token = parse
   | '}'                     { RBRACE }
   | ';'                     { SEMI }
   | ','                     { COMMA }
+  
+  (*Operators*)
   | '+'                     { PLUS }
   | '-'                     { MINUS }
   | '*'                     { TIMES }
@@ -37,6 +36,8 @@ rule token = parse
   | "and"                   { AND }
   | "or"                    { OR }
   | "not"                   { NOT }
+  
+  (*Control Flow*)
   | "if"                    { IF }
   | "ifne"                  { IFNOELSE }
   | "else"                  { ELSE }
@@ -45,21 +46,35 @@ rule token = parse
   | "in"                    { IN }
   | ":"                     { COLON }
   | "return"                { RETURN }
-  | "int"                   { INT }
-  | "bool"                  { BOOL }
-  | "true"                  { BLIT(true)  }
-  | "false"                 { BLIT(false) }
-  (*trs forward/backward connectors*)
+  
+  (*Forward/Backward Evaluation*)
   | "forward"               { FORWARD }
-  | "give"                  { GIVE }
   | "create"                { CREATE }
+  | "give"                  { GIVE }
   | "backward"              { BACKWARD }
-  | "combine"               { COMBINE }
-  (*fuck camltree running functions*)
-  | "check"    	            { CHECK }
+  | "eval"                  { EVAL }
+  
+  (*Oasis TRS Runtime*)
+  | "check"                 { CHECK }
   | "run"                   { RUN }
   | "replace"               { REPLACE }
   
+  (*Types*)
+  | "int"                   { INT }
+  | "bool"                  { BOOL }
+  | ".trml"                 { TRML }
+  | "Root"                  { ROOT }
+  | "Node"                  { NODE }
+  
+  (*Oasis Symbols*)
+  | "<-"                    { LARROW }
+  | "->"                    { RARROW }
+  | "`"                     { BTICK }
+  | "@"                     { AT }
+  
+  (*Literals and Strings*)
+  | "True"                  { BLIT(true) }
+  | "False"                 { BLIT(false) }
   | digit+ as lem           { LITERAL(int_of_string lem) }
   | letter (digit | letter | '_')* as lem    { ID(lem) }
   | eof                     { EOF }
@@ -68,4 +83,3 @@ rule token = parse
 and comment = parse
     "*/" { token lexbuf }
   | _    { comment lexbuf }
-

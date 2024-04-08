@@ -7,7 +7,9 @@ open Ast
 %token SEMI LPAREN RPAREN LBRACK, RBRACK, LBRACE RBRACE PLUS MINUS TIMES DIVIDE MOD ASSIGN
 %token EQ NEQ LT LEQ GT GEQ AND OR NOT NEG
 %token IFNOELSE IF ELSE WHILE FOR IN COLON INT BOOL
-%token TRML ROOT NODE RARROW BTICK NONE
+%token TRML ROOT NODE LARROW RARROW BTICK AT
+%token FORWARD CREATE GIVE BACKWARD EVAL
+%token CHECK RUN REPLACE
 %token RETURN COMMA
 %token <int> LITERAL
 %token <bool> BLIT
@@ -30,9 +32,9 @@ open Ast
 %%
 
 /*Program - TRML definitions portion and program main*/
-/*TODO: separate definitions and tscript into two files*/
+/*TODO: separate definitions and decls into two files*/
 program:
-  trml trs EOF { let (tn, tl, tv)=$1 in let (dv, df)=$2 in (tn, tl, tv, dv, df) }
+  trml decls EOF { let (tn, tl, tv)=$1 in let (dv, df, _, _)=$2 in (tn, tl, tv, dv, df) }
 
 /*TRML - define node types, define nodes, initialize nodes*/
 trml:
@@ -60,28 +62,25 @@ valsdecl:
  | ID ASSIGN typ expr                   { ($1, ValOpt($3, $4), None) }
  | ID ASSIGN BTICK typ expr             { ($1, None, ValOpt($4, $5)) }
 
-/*Tree Script File*, should give 4 things: 
-variable, function, forward, backward declaration /
-trs:
+/*Declarations*/
+decls:
    { ([], [], [], []) }
- | vdecl SEMI trs    { 
-   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
+ | vdecl SEMI decls    {
+   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in
    (($1::cur_vdecl), cur_fdecl, cur_fwddecl, cur_bckdecl)
   }
- | fdecl trs    { 
-   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
+ | fdecl decls         {
+   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $2 in
    (cur_vdecl, ($1::cur_fdecl), cur_fwddecl, cur_bckdecl)
   }
- | fwddecl trs   { 
-   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
+ | fwddecl decls       {
+   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $2 in
    (cur_vdecl, cur_fdecl, ($1::cur_fwddecl), cur_bckdecl)
   }
- | bckdecl trs      { 
-   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $3 in 
+ | bckdecl decls       {
+   let (cur_vdecl, cur_fdecl, cur_fwddecl, cur_bckdecl) = $2 in
    (cur_vdecl, cur_fdecl, cur_fwddecl, ($1::cur_bckdecl))
   }
-
-
 vdecl_list:
     { [] }
   | vdecl SEMI vdecl_list      { $1 :: $3 }
@@ -104,18 +103,6 @@ fdecl:
       body=$7
     }
   }
-
-fwddecl:
-  FORWARD ID RARROW ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE 
- {
-    {
-      pnode = $2;
-      cnode = $4;
-      formals = $6; 
-      locals = $9;
-      body = $10;
-    }
- }
 
 formals_opt:
     { [] }
@@ -177,4 +164,26 @@ args:
     expr  { [$1] }
   | expr COMMA args { $1::$3 }
 
+fwddecl:
+    FORWARD ID RARROW ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
+   {
+      {
+        pnode = $2;
+        cnode = $4;
+        formals = $6;
+        locals = $9;
+        body = $10;
+      }
+   }
 
+bckdecl:
+  BACKWARD BTICK ID RARROW BTICK ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
+ {
+    {
+      pnode = $3;
+      cnode = $6;
+      formals = $8;
+      locals = $11;
+      body = $12;
+    }
+ }
