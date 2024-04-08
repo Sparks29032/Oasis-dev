@@ -71,6 +71,7 @@ rule token = parse
   | "->"                    { RARROW }
   | "`"                     { BTICK }
   | "@"                     { AT }
+  | "."                     { DOT }
   
   (*Literals and Strings*)
   | "True"                  { BLIT(true) }

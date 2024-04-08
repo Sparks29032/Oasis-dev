@@ -11,6 +11,7 @@ open Ast
 %token FORWARD CREATE GIVE BACKWARD EVAL
 %token CHECK RUN REPLACE
 %token RETURN COMMA
+%token DOT
 %token <int> LITERAL
 %token <bool> BLIT
 %token <string> ID
@@ -129,6 +130,7 @@ expr:
     LITERAL             { Literal($1) }
   | BLIT                { BoolLit($1) }
   | ID                  { Id($1) }
+  | ID DOT ID           { RefId($1, $3) }
   | expr PLUS expr      { Binop($1, Add, $3) }
   | expr MINUS expr     { Binop($1, Sub, $3) }
   | expr TIMES expr     { Binop($1, Tim, $3) }
