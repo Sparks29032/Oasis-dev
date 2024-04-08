@@ -30,6 +30,9 @@ type stmt =
   | While of expr * stmt
   | For of string * (expr * expr) list * stmt
   | Return of expr
+  | Give of expr
+  | Eval of expr
+  | Create of expr * expr
 and stmt_opt = None | StmtOpt of stmt
 
 (*Bindings*)
@@ -57,22 +60,22 @@ type func_def = {
 }
 
 type fwdfunc_def = {
-    pnode : string;
-    cnode : string;
+    fpnode : string;
+    fcnode : string;
     formals : bind list;
     locals : bind list;
     body : stmt list;
 }
 
 type bckfunc_def = {
-    pnode : string;
-    cnode : string;
+    bpnode : string;
+    bcnode : string;
     formals : bind list;
     locals : bind list;
     body : stmt list;
 }
 (*Program*)
-type program = nbind list * lbind list * vbind list * bind list * func_def list
+type program = nbind list * lbind list * vbind list * bind list * func_def list * fwdfunc_def list * bckfunc_def list
 
 (*Pretty-Printing*)
 (*Operators*)
@@ -116,6 +119,9 @@ let rec string_of_stmt = function
     "{\n" ^ String.concat "" (List.map string_of_stmt stmts) ^ "}\n"
   | Expr(expr) -> string_of_expr expr ^ ";\n"
   | Return(expr) -> "return " ^ string_of_expr expr ^ ";\n"
+  | Give(expr) -> "give " ^ string_of_expr expr ^ ";\n"
+  | Eval(expr) -> "eval " ^ string_of_expr expr ^ ";\n"
+  | Create(expr, count) -> "create " ^ string_of_expr expr ^ " [" ^ "node created <" ^ string_of_expr count ^ "> times];\n"
   | If(e, s1, s2) ->  "if (" ^ string_of_expr e ^ ")\n" ^ string_of_stmt s1 ^ "else\n" ^ string_of_stmtopt s2
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
   | For(v, el, s) -> "for (" ^ v ^ " in [" ^ String.concat ", " (List.map string_of_forexpr el) ^ "]) " ^ string_of_stmt s
@@ -152,11 +158,29 @@ let string_of_fdecl fdecl =
   "}\n"
 
 (*Program*)
-let string_of_program (nodes, ndcls, ninis, vars, funcs) =
+let string_of_fwddecl fwddecl =
+"forward " ^ fwddecl.fpnode ^ " -> " ^
+fwddecl.fcnode ^ "(" ^ String.concat ", " (List.map snd fwddecl.formals) ^
+")\n{\n" ^
+String.concat "" (List.map string_of_vdecl fwddecl.locals) ^
+String.concat "" (List.map string_of_stmt fwddecl.body) ^
+"}\n"
+
+let string_of_bwddecl bwddecl =
+"backward `" ^ bwddecl.bpnode ^ " -> `" ^
+bwddecl.bcnode ^ " (" ^ String.concat ", " (List.map snd bwddecl.formals) ^
+")\n{\n" ^
+String.concat "" (List.map string_of_vdecl bwddecl.locals) ^
+String.concat "" (List.map string_of_stmt bwddecl.body) ^
+"}\n"
+
+let string_of_program (nodes, ndcls, ninis, vars, funcs, fwdfuncs, bwdfuncs) =
   "\n~~~~~~~~~~~~~\n|Parsed TRML|\n~~~~~~~~~~~~~\n" ^
   String.concat "\n" (List.map string_of_nodedecl nodes) ^ "\n" ^
   String.concat "\n" (List.map string_of_linkdecl ndcls) ^ "\n" ^
   String.concat "\n" (List.map string_of_valsdecl ninis) ^ "\n" ^
   "\n~~~~~~~~~~~~\n|Parsed TRS|\n~~~~~~~~~~~~\n" ^
   String.concat "\n" (List.map string_of_vdecl vars) ^ "\n" ^
-  String.concat "\n" (List.map string_of_fdecl funcs)
+  String.concat "\n" (List.map string_of_fdecl funcs) ^ "\n" ^
+  String.concat "\n" (List.map string_of_fwddecl fwdfuncs) ^ "\n" ^
+  String.concat "\n" (List.map string_of_bwddecl bwdfuncs) ^ "\n"

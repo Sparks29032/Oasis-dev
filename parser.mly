@@ -35,7 +35,7 @@ open Ast
 /*Program - TRML definitions portion and program main*/
 /*TODO: separate definitions and decls into two files*/
 program:
-  trml decls EOF { let (tn, tl, tv)=$1 in let (dv, df, _, _)=$2 in (tn, tl, tv, dv, df) }
+  trml decls EOF { let (tn, tl, tv)=$1 in let (dv, df, dfwd, dbwd)=$2 in (tn, tl, tv, dv, df, dfwd, dbwd) }
 
 /*TRML - define node types, define nodes, initialize nodes*/
 trml:
@@ -46,6 +46,7 @@ trmldecls:
  | linkdecl SEMI trmldecls { let (nd,ld,vd) = $3 in (nd, ($1 :: ld), vd) }
  | valsdecl SEMI trmldecls { let (nd,ld,vd) = $3 in (nd, ld, ($1 :: vd)) }
 
+/*TRS/declarations*/
 /*Node Type Types*/
 ntyp:
     ROOT    { Root }
@@ -124,7 +125,10 @@ stmt:
   | IFNOELSE LPAREN expr RPAREN stmt            { If ($3, $5, None) }
   | WHILE LPAREN expr RPAREN stmt   { While ($3, $5) }
   | FOR LPAREN ID IN LBRACK forexpr_list RBRACK RPAREN stmt    { For ($3, $6, $9) }
-  | RETURN expr SEMI                { Return $2 }
+  | RETURN expr SEMI                { Return($2) }
+  | GIVE expr SEMI                  { Give($2) }
+  | EVAL expr SEMI                  { Eval($2) }
+  | CREATE expr AT expr SEMI        { Create($2, $4) }
 
 expr:
     LITERAL             { Literal($1) }
@@ -170,8 +174,8 @@ fwddecl:
     FORWARD ID RARROW ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
    {
       {
-        pnode = $2;
-        cnode = $4;
+        fpnode = $2;
+        fcnode = $4;
         formals = $6;
         locals = $9;
         body = $10;
@@ -182,8 +186,8 @@ bckdecl:
   BACKWARD BTICK ID RARROW BTICK ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
  {
     {
-      pnode = $3;
-      cnode = $6;
+      bpnode = $3;
+      bcnode = $6;
       formals = $8;
       locals = $11;
       body = $12;
